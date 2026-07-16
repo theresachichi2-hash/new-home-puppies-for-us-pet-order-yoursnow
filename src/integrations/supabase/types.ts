@@ -120,6 +120,7 @@ export type Database = {
           gender: string
           id: string
           image_url: string | null
+          media: Json
           name: string
           price: number
           updated_at: string
@@ -134,6 +135,7 @@ export type Database = {
           gender: string
           id?: string
           image_url?: string | null
+          media?: Json
           name: string
           price: number
           updated_at?: string
@@ -148,6 +150,7 @@ export type Database = {
           gender?: string
           id?: string
           image_url?: string | null
+          media?: Json
           name?: string
           price?: number
           updated_at?: string
