@@ -14,6 +14,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PuppyIdRouteImport } from './routes/puppy.$id'
 import { Route as OrderIdRouteImport } from './routes/order.$id'
+import { Route as ApiPublicEnsureAdminRouteImport } from './routes/api/public/ensure-admin'
 
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
@@ -40,6 +41,11 @@ const OrderIdRoute = OrderIdRouteImport.update({
   path: '/order/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicEnsureAdminRoute = ApiPublicEnsureAdminRouteImport.update({
+  id: '/api/public/ensure-admin',
+  path: '/api/public/ensure-admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/order/$id': typeof OrderIdRoute
   '/puppy/$id': typeof PuppyIdRoute
+  '/api/public/ensure-admin': typeof ApiPublicEnsureAdminRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/order/$id': typeof OrderIdRoute
   '/puppy/$id': typeof PuppyIdRoute
+  '/api/public/ensure-admin': typeof ApiPublicEnsureAdminRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,13 +70,33 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/order/$id': typeof OrderIdRoute
   '/puppy/$id': typeof PuppyIdRoute
+  '/api/public/ensure-admin': typeof ApiPublicEnsureAdminRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/admin' | '/order/$id' | '/puppy/$id'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/admin'
+    | '/order/$id'
+    | '/puppy/$id'
+    | '/api/public/ensure-admin'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/admin' | '/order/$id' | '/puppy/$id'
-  id: '__root__' | '/' | '/about' | '/admin' | '/order/$id' | '/puppy/$id'
+  to:
+    | '/'
+    | '/about'
+    | '/admin'
+    | '/order/$id'
+    | '/puppy/$id'
+    | '/api/public/ensure-admin'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/admin'
+    | '/order/$id'
+    | '/puppy/$id'
+    | '/api/public/ensure-admin'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -77,6 +105,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   OrderIdRoute: typeof OrderIdRoute
   PuppyIdRoute: typeof PuppyIdRoute
+  ApiPublicEnsureAdminRoute: typeof ApiPublicEnsureAdminRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -116,6 +145,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrderIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/ensure-admin': {
+      id: '/api/public/ensure-admin'
+      path: '/api/public/ensure-admin'
+      fullPath: '/api/public/ensure-admin'
+      preLoaderRoute: typeof ApiPublicEnsureAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -125,6 +161,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   OrderIdRoute: OrderIdRoute,
   PuppyIdRoute: PuppyIdRoute,
+  ApiPublicEnsureAdminRoute: ApiPublicEnsureAdminRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
