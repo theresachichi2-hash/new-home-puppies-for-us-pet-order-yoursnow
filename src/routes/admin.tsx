@@ -15,15 +15,18 @@ function AdminPage() {
   const [tab, setTab] = useState<"puppies" | "orders" | "settings">("puppies");
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data }) => {
+    async function loadRoles(userId: string) {
+      const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+      setIsAdmin(!!roles?.some((r) => r.role === "admin"));
+    }
+    supabase.auth.getUser().then(({ data }) => {
       if (!data.user) { setSession(null); setIsAdmin(false); return; }
       setSession({ userId: data.user.id });
-      const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", data.user.id);
-      setIsAdmin(!!roles?.some((r) => r.role === "admin"));
+      loadRoles(data.user.id);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
       if (!s?.user) { setSession(null); setIsAdmin(false); }
-      else { setSession({ userId: s.user.id }); }
+      else { setSession({ userId: s.user.id }); setIsAdmin(null); loadRoles(s.user.id); }
     });
     return () => sub.subscription.unsubscribe();
   }, []);
