@@ -42,7 +42,7 @@ function Home() {
         <div className="mb-8 flex items-end justify-between">
           <div>
             <h2 className="text-3xl font-semibold md:text-4xl">Available puppies</h2>
-            <p className="mt-1 text-muted-foreground">{available.length} looking for a home</p>
+            <p className="mt-1 text-muted-foreground">{available.filter((p) => p.available).length} looking for a home</p>
           </div>
         </div>
 
