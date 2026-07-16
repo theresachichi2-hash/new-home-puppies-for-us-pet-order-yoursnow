@@ -169,8 +169,12 @@ function PuppyForm({ puppy, onDone, onCancel }: { puppy: Puppy | null; onDone: (
         contentType: file.type,
       });
       if (upErr) throw upErr;
-      const { data } = supabase.storage.from("puppy-images").getPublicUrl(path);
-      setImageUrl(data.publicUrl);
+      // Bucket is private (workspace policy blocks public buckets), so use a long-lived signed URL.
+      const { data: signed, error: signErr } = await supabase
+        .storage.from("puppy-images")
+        .createSignedUrl(path, 60 * 60 * 24 * 365 * 10); // 10 years
+      if (signErr) throw signErr;
+      setImageUrl(signed.signedUrl);
       toast.success("Image uploaded");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
