@@ -9,7 +9,7 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const { data: puppies, isLoading } = useQuery({ queryKey: ["puppies"], queryFn: fetchPuppies });
-  const available = (puppies ?? []).filter((p) => p.available);
+  const available = puppies ?? [];
 
   return (
     <div>
