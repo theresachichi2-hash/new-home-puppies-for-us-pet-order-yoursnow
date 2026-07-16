@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { fetchPuppy } from "@/lib/puppies";
+import { fetchPuppy, type Puppy } from "@/lib/puppies";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/puppy/$id")({
