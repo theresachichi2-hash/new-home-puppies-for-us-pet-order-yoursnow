@@ -142,3 +142,53 @@ function Field({ label, name, type = "text", required, defaultValue }: { label: 
     </label>
   );
 }
+
+function PuppyGallery({ puppy }: { puppy: Puppy }) {
+  const items = puppy.media.length
+    ? puppy.media
+    : puppy.image_url
+      ? [{ type: "image" as const, url: puppy.image_url }]
+      : [];
+  const [active, setActive] = useState(0);
+  const current = items[active];
+
+  if (!current) {
+    return (
+      <div className="flex aspect-square items-center justify-center overflow-hidden rounded-3xl bg-muted text-8xl shadow-card">🐶</div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="aspect-square overflow-hidden rounded-3xl bg-muted shadow-card">
+        {current.type === "image" ? (
+          <img src={current.url} alt={puppy.name} className="h-full w-full object-cover" />
+        ) : (
+          <video src={current.url} controls playsInline className="h-full w-full bg-black object-contain" />
+        )}
+      </div>
+      {items.length > 1 && (
+        <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
+          {items.map((m, i) => (
+            <button
+              type="button"
+              key={m.url}
+              onClick={() => setActive(i)}
+              className={`relative h-16 w-16 flex-none overflow-hidden rounded-lg border-2 transition ${i === active ? "border-primary" : "border-transparent opacity-80 hover:opacity-100"}`}
+              aria-label={`View ${m.type} ${i + 1}`}
+            >
+              {m.type === "image" ? (
+                <img src={m.url} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <>
+                  <video src={m.url} muted className="h-full w-full object-cover" />
+                  <span className="absolute inset-0 flex items-center justify-center bg-black/30 text-white text-lg">▶</span>
+                </>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
