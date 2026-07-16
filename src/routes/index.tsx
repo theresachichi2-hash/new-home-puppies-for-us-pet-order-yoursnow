@@ -9,7 +9,7 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const { data: puppies, isLoading } = useQuery({ queryKey: ["puppies"], queryFn: fetchPuppies });
-  const available = (puppies ?? []).filter((p) => p.available);
+  const available = puppies ?? [];
 
   return (
     <div>
@@ -42,7 +42,7 @@ function Home() {
         <div className="mb-8 flex items-end justify-between">
           <div>
             <h2 className="text-3xl font-semibold md:text-4xl">Available puppies</h2>
-            <p className="mt-1 text-muted-foreground">{available.length} looking for a home</p>
+            <p className="mt-1 text-muted-foreground">{available.filter((p) => p.available).length} looking for a home</p>
           </div>
         </div>
 
@@ -69,11 +69,14 @@ function PuppyCard({ puppy }: { puppy: Puppy }) {
       params={{ id: puppy.id }}
       className="group overflow-hidden rounded-2xl border border-border bg-card shadow-card transition hover:-translate-y-1 hover:shadow-soft"
     >
-      <div className="aspect-square overflow-hidden bg-muted">
+      <div className="relative aspect-square overflow-hidden bg-muted">
         {puppy.image_url ? (
-          <img src={puppy.image_url} alt={puppy.name} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+          <img src={puppy.image_url} alt={puppy.name} loading="lazy" className={`h-full w-full object-cover transition duration-500 group-hover:scale-105 ${!puppy.available ? "opacity-70" : ""}`} />
         ) : (
           <div className="flex h-full items-center justify-center text-6xl">🐶</div>
+        )}
+        {!puppy.available && (
+          <span className="absolute left-3 top-3 rounded-full bg-destructive px-3 py-1 text-xs font-semibold text-destructive-foreground shadow-soft">Sold</span>
         )}
       </div>
       <div className="p-5">
