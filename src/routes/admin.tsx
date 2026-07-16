@@ -61,42 +61,40 @@ function AdminPage() {
 
 function AuthPanel() {
   const [busy, setBusy] = useState(false);
-  async function signInAsAdmin() {
+  useEffect(() => {
+    // Ensure the admin account exists so the credentials work on first use.
+    fetch("/api/public/ensure-admin", { method: "POST" }).catch(() => {});
+  }, []);
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const email = String(fd.get("email"));
+    const password = String(fd.get("password"));
     setBusy(true);
-    try {
-      const res = await fetch("/api/public/ensure-admin", { method: "POST" });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || "Failed to prepare admin account");
-      }
-      const { error } = await supabase.auth.signInWithPassword({
-        email: "Ovoroc7@gmail.com",
-        password: "Ovoro123$",
-      });
-      if (error) throw error;
-      toast.success("Signed in as admin");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Sign in failed");
-    } finally {
-      setBusy(false);
-    }
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setBusy(false);
+    if (error) toast.error(error.message);
+    else toast.success("Signed in");
   }
   return (
     <div className="mx-auto max-w-md px-4 py-16">
       <div className="rounded-3xl border border-border bg-card p-8 shadow-card">
-        <h1 className="font-display text-2xl font-semibold">Admin access</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Sign in to manage puppies, orders, and payment settings.</p>
-        <button
-          onClick={signInAsAdmin}
-          disabled={busy}
-          className="mt-6 w-full rounded-full bg-primary py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
-        >
-          {busy ? "Signing in…" : "Sign in as Admin"}
-        </button>
+        <h1 className="font-display text-2xl font-semibold">Admin sign in</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Enter your admin email and password.</p>
+        <form onSubmit={onSubmit} className="mt-6 space-y-3">
+          <input name="email" type="email" required placeholder="Email" autoComplete="email"
+            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" />
+          <input name="password" type="password" required placeholder="Password" autoComplete="current-password"
+            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" />
+          <button disabled={busy} className="w-full rounded-full bg-primary py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-50">
+            {busy ? "Signing in…" : "Sign in"}
+          </button>
+        </form>
       </div>
     </div>
   );
 }
+
 
 function PuppiesAdmin() {
   const qc = useQueryClient();
