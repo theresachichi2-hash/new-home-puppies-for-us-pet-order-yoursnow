@@ -243,6 +243,7 @@ function FInput({ label, className = "", ...rest }: React.InputHTMLAttributes<HT
 }
 
 function OrdersAdmin() {
+  const qc = useQueryClient();
   const { data: orders, isLoading } = useQuery({
     queryKey: ["orders"],
     queryFn: async () => {
@@ -251,6 +252,26 @@ function OrdersAdmin() {
       return data;
     },
   });
+
+  async function confirmPayment(order: { id: string; puppy_id: string | null; puppy_name: string }) {
+    if (!confirm(`Confirm payment for ${order.puppy_name}? This marks the puppy as sold.`)) return;
+    const { error: oErr } = await supabase.from("orders").update({ status: "paid" }).eq("id", order.id);
+    if (oErr) { toast.error(oErr.message); return; }
+    if (order.puppy_id) {
+      const { error: pErr } = await supabase.from("puppies").update({ available: false }).eq("id", order.puppy_id);
+      if (pErr) { toast.error(`Order marked paid, but couldn't update puppy: ${pErr.message}`); return; }
+    }
+    toast.success("Payment confirmed — puppy marked sold");
+    qc.invalidateQueries({ queryKey: ["orders"] });
+    qc.invalidateQueries({ queryKey: ["puppies"] });
+  }
+
+  async function markUnpaid(orderId: string) {
+    const { error } = await supabase.from("orders").update({ status: "pending_payment" }).eq("id", orderId);
+    if (error) toast.error(error.message);
+    else { toast.success("Reverted to pending"); qc.invalidateQueries({ queryKey: ["orders"] }); }
+  }
+
   if (isLoading) return <div className="text-muted-foreground">Loading…</div>;
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card">
@@ -258,7 +279,7 @@ function OrdersAdmin() {
         <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
           <tr>
             <th className="p-3">Date</th><th className="p-3">Puppy</th><th className="p-3">Buyer</th>
-            <th className="p-3">Payment</th><th className="p-3">Delivery</th><th className="p-3">Status</th>
+            <th className="p-3">Payment</th><th className="p-3">Delivery</th><th className="p-3">Status</th><th className="p-3"></th>
           </tr>
         </thead>
         <tbody>
@@ -269,15 +290,31 @@ function OrdersAdmin() {
               <td className="p-3"><div>{o.buyer_name}</div><div className="text-xs text-muted-foreground">{o.buyer_email}</div><div className="text-xs text-muted-foreground">{o.buyer_phone}</div></td>
               <td className="p-3 capitalize">{o.payment_method}</td>
               <td className="p-3 text-xs">{o.address_line1}{o.address_line2 ? `, ${o.address_line2}` : ""}<br />{o.city}, {o.state} {o.postal_code}<br />{o.country}</td>
-              <td className="p-3">{o.status}</td>
+              <td className="p-3">
+                <span className={`inline-block rounded-full px-2 py-0.5 text-xs ${o.status === "paid" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>
+                  {o.status === "paid" ? "Paid / Sold" : "Pending payment"}
+                </span>
+              </td>
+              <td className="p-3 text-right whitespace-nowrap">
+                {o.status !== "paid" ? (
+                  <button onClick={() => confirmPayment(o)} className="rounded-full bg-primary px-3 py-1.5 text-xs text-primary-foreground">
+                    Confirm payment
+                  </button>
+                ) : (
+                  <button onClick={() => markUnpaid(o.id)} className="text-xs text-muted-foreground hover:text-foreground">
+                    Undo
+                  </button>
+                )}
+              </td>
             </tr>
           ))}
-          {orders?.length === 0 && <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">No orders yet.</td></tr>}
+          {orders?.length === 0 && <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">No orders yet.</td></tr>}
         </tbody>
       </table>
     </div>
   );
 }
+
 
 function SettingsAdmin() {
   const qc = useQueryClient();
