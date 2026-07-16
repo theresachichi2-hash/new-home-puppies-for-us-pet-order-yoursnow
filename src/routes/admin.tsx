@@ -151,6 +151,33 @@ function PuppiesAdmin() {
 
 function PuppyForm({ puppy, onDone, onCancel }: { puppy: Puppy | null; onDone: () => void; onCancel: () => void }) {
   const [busy, setBusy] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string>(puppy?.image_url ?? "");
+  const [uploading, setUploading] = useState(false);
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Please choose an image file"); return; }
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("puppy-images").upload(path, file, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: file.type,
+      });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from("puppy-images").getPublicUrl(path);
+      setImageUrl(data.publicUrl);
+      toast.success("Image uploaded");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
+
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
@@ -162,7 +189,7 @@ function PuppyForm({ puppy, onDone, onCancel }: { puppy: Puppy | null; onDone: (
       color: String(fd.get("color") || ""),
       price: Number(fd.get("price")),
       description: String(fd.get("description") || ""),
-      image_url: String(fd.get("image_url") || ""),
+      image_url: imageUrl,
       available: fd.get("available") === "on",
     };
     setBusy(true);
@@ -185,7 +212,15 @@ function PuppyForm({ puppy, onDone, onCancel }: { puppy: Puppy | null; onDone: (
       <FInput label="Age (weeks)" name="age_weeks" type="number" defaultValue={String(puppy?.age_weeks ?? 8)} required />
       <FInput label="Color" name="color" defaultValue={puppy?.color ?? ""} />
       <FInput label="Price (USD)" name="price" type="number" step="0.01" defaultValue={String(puppy?.price ?? "")} required />
-      <FInput label="Image URL" name="image_url" defaultValue={puppy?.image_url ?? ""} className="sm:col-span-2" />
+      <label className="text-sm sm:col-span-2">
+        <span className="mb-1 block font-medium">Puppy image</span>
+        <div className="flex items-center gap-4">
+          {imageUrl && <img src={imageUrl} alt="preview" className="h-20 w-20 rounded-lg object-cover" />}
+          <input type="file" accept="image/*" onChange={handleFile} disabled={uploading}
+            className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-secondary file:px-4 file:py-2 file:text-sm file:font-medium" />
+        </div>
+        {uploading && <span className="mt-1 block text-xs text-muted-foreground">Uploading…</span>}
+      </label>
       <label className="text-sm sm:col-span-2"><span className="mb-1 block font-medium">Description</span>
         <textarea name="description" defaultValue={puppy?.description ?? ""} rows={3} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" />
       </label>
@@ -193,7 +228,7 @@ function PuppyForm({ puppy, onDone, onCancel }: { puppy: Puppy | null; onDone: (
         <input type="checkbox" name="available" defaultChecked={puppy?.available ?? true} /> Available for sale
       </label>
       <div className="flex gap-2 sm:col-span-2">
-        <button disabled={busy} className="rounded-full bg-primary px-5 py-2 text-sm text-primary-foreground disabled:opacity-50">{busy ? "Saving…" : "Save"}</button>
+        <button disabled={busy || uploading} className="rounded-full bg-primary px-5 py-2 text-sm text-primary-foreground disabled:opacity-50">{busy ? "Saving…" : "Save"}</button>
         <button type="button" onClick={onCancel} className="rounded-full bg-secondary px-5 py-2 text-sm">Cancel</button>
       </div>
     </form>
