@@ -167,40 +167,59 @@ function PuppiesAdmin() {
 
 function PuppyForm({ puppy, onDone, onCancel }: { puppy: Puppy | null; onDone: () => void; onCancel: () => void }) {
   const [busy, setBusy] = useState(false);
-  const [imageUrl, setImageUrl] = useState<string>(puppy?.image_url ?? "");
-  const [uploading, setUploading] = useState(false);
+  const [media, setMedia] = useState<MediaItem[]>(() => {
+    const existing = puppy?.media ?? [];
+    if (existing.length) return existing;
+    return puppy?.image_url ? [{ type: "image", url: puppy.image_url }] : [];
+  });
+  const [uploading, setUploading] = useState(0);
 
-  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith("image/")) { toast.error("Please choose an image file"); return; }
-    setUploading(true);
-    try {
-      const ext = file.name.split(".").pop() || "jpg";
-      const path = `${crypto.randomUUID()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from("puppy-images").upload(path, file, {
-        cacheControl: "3600",
-        upsert: false,
-        contentType: file.type,
-      });
-      if (upErr) throw upErr;
-      // Bucket is private (workspace policy blocks public buckets), so use a long-lived signed URL.
-      const { data: signed, error: signErr } = await supabase
-        .storage.from("puppy-images")
-        .createSignedUrl(path, 60 * 60 * 24 * 365 * 10); // 10 years
-      if (signErr) throw signErr;
-      setImageUrl(signed.signedUrl);
-      toast.success("Image uploaded");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Upload failed");
-    } finally {
-      setUploading(false);
+  async function uploadOne(file: File): Promise<MediaItem | null> {
+    const isImage = file.type.startsWith("image/");
+    const isVideo = file.type.startsWith("video/");
+    if (!isImage && !isVideo) { toast.error(`${file.name}: not an image or video`); return null; }
+    const ext = file.name.split(".").pop() || (isVideo ? "mp4" : "jpg");
+    const path = `${crypto.randomUUID()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("puppy-images").upload(path, file, {
+      cacheControl: "3600", upsert: false, contentType: file.type,
+    });
+    if (upErr) { toast.error(`${file.name}: ${upErr.message}`); return null; }
+    const { data: signed, error: signErr } = await supabase
+      .storage.from("puppy-images").createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+    if (signErr) { toast.error(`${file.name}: ${signErr.message}`); return null; }
+    return { type: isVideo ? "video" : "image", url: signed.signedUrl };
+  }
+
+  async function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    e.target.value = "";
+    setUploading((n) => n + files.length);
+    const results = await Promise.all(files.map(uploadOne));
+    setUploading((n) => Math.max(0, n - files.length));
+    const good = results.filter((r): r is MediaItem => !!r);
+    if (good.length) {
+      setMedia((prev) => [...prev, ...good]);
+      toast.success(`${good.length} file${good.length === 1 ? "" : "s"} uploaded`);
     }
+  }
+
+  function removeAt(idx: number) {
+    setMedia((prev) => prev.filter((_, i) => i !== idx));
+  }
+  function moveFirst(idx: number) {
+    setMedia((prev) => {
+      const next = [...prev];
+      const [item] = next.splice(idx, 1);
+      next.unshift(item);
+      return next;
+    });
   }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    const cover = media.find((m) => m.type === "image")?.url ?? null;
     const payload = {
       name: String(fd.get("name")),
       breed: String(fd.get("breed")),
@@ -209,7 +228,8 @@ function PuppyForm({ puppy, onDone, onCancel }: { puppy: Puppy | null; onDone: (
       color: String(fd.get("color") || ""),
       price: Number(fd.get("price")),
       description: String(fd.get("description") || ""),
-      image_url: imageUrl,
+      image_url: cover,
+      media,
       available: fd.get("available") === "on",
     };
     setBusy(true);
@@ -232,15 +252,38 @@ function PuppyForm({ puppy, onDone, onCancel }: { puppy: Puppy | null; onDone: (
       <FInput label="Age (weeks)" name="age_weeks" type="number" defaultValue={String(puppy?.age_weeks ?? 8)} required />
       <FInput label="Color" name="color" defaultValue={puppy?.color ?? ""} />
       <FInput label="Price (USD)" name="price" type="number" step="0.01" defaultValue={String(puppy?.price ?? "")} required />
-      <label className="text-sm sm:col-span-2">
-        <span className="mb-1 block font-medium">Puppy image</span>
-        <div className="flex items-center gap-4">
-          {imageUrl && <img src={imageUrl} alt="preview" className="h-20 w-20 rounded-lg object-cover" />}
-          <input type="file" accept="image/*" onChange={handleFile} disabled={uploading}
-            className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-secondary file:px-4 file:py-2 file:text-sm file:font-medium" />
+      <div className="text-sm sm:col-span-2">
+        <div className="mb-2 flex items-center justify-between">
+          <span className="font-medium">Photos & videos</span>
+          <span className="text-xs text-muted-foreground">{media.length} attached · first image is the cover</span>
         </div>
-        {uploading && <span className="mt-1 block text-xs text-muted-foreground">Uploading…</span>}
-      </label>
+        {media.length > 0 && (
+          <div className="mb-3 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
+            {media.map((m, i) => (
+              <div key={m.url} className="group relative overflow-hidden rounded-lg border border-border bg-muted">
+                {m.type === "image" ? (
+                  <img src={m.url} alt="" className="aspect-square w-full object-cover" />
+                ) : (
+                  <video src={m.url} className="aspect-square w-full object-cover" muted />
+                )}
+                {m.type === "video" && <span className="absolute left-1 top-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white">▶ Video</span>}
+                <div className="absolute inset-x-0 bottom-0 flex justify-between gap-1 bg-black/60 p-1 opacity-0 transition group-hover:opacity-100">
+                  {m.type === "image" && i !== 0 && (
+                    <button type="button" onClick={() => moveFirst(i)} className="rounded bg-white/90 px-1.5 py-0.5 text-[10px] font-medium text-black">Cover</button>
+                  )}
+                  <button type="button" onClick={() => removeAt(i)} className="ml-auto rounded bg-destructive px-1.5 py-0.5 text-[10px] font-medium text-destructive-foreground">Remove</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <input type="file" accept="image/*,video/*" multiple onChange={handleFiles} disabled={uploading > 0}
+          className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-secondary file:px-4 file:py-2 file:text-sm file:font-medium" />
+        <p className="mt-1 text-xs text-muted-foreground">
+          Pick multiple images and/or videos at once. No limit on how many you attach.
+          {uploading > 0 && <span className="ml-1 font-medium text-foreground">Uploading {uploading}…</span>}
+        </p>
+      </div>
       <label className="text-sm sm:col-span-2"><span className="mb-1 block font-medium">Description</span>
         <textarea name="description" defaultValue={puppy?.description ?? ""} rows={3} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" />
       </label>
@@ -248,7 +291,7 @@ function PuppyForm({ puppy, onDone, onCancel }: { puppy: Puppy | null; onDone: (
         <input type="checkbox" name="available" defaultChecked={puppy?.available ?? true} /> Available for sale
       </label>
       <div className="flex gap-2 sm:col-span-2">
-        <button disabled={busy || uploading} className="rounded-full bg-primary px-5 py-2 text-sm text-primary-foreground disabled:opacity-50">{busy ? "Saving…" : "Save"}</button>
+        <button disabled={busy || uploading > 0} className="rounded-full bg-primary px-5 py-2 text-sm text-primary-foreground disabled:opacity-50">{busy ? "Saving…" : "Save"}</button>
         <button type="button" onClick={onCancel} className="rounded-full bg-secondary px-5 py-2 text-sm">Cancel</button>
       </div>
     </form>
