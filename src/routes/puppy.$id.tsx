@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { fetchPuppy } from "@/lib/puppies";
+import { fetchPuppy, type Puppy } from "@/lib/puppies";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/puppy/$id")({
@@ -70,13 +70,7 @@ function PuppyPage() {
       <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">← Back to puppies</Link>
       <div className="mt-6 grid gap-10 md:grid-cols-2">
         <div>
-          <div className="aspect-square overflow-hidden rounded-3xl bg-muted shadow-card">
-            {puppy.image_url ? (
-              <img src={puppy.image_url} alt={puppy.name} className="h-full w-full object-cover" />
-            ) : (
-              <div className="flex h-full items-center justify-center text-8xl">🐶</div>
-            )}
-          </div>
+          <PuppyGallery puppy={puppy} />
           <div className="mt-6">
             <h1 className="font-display text-4xl font-semibold">{puppy.name}</h1>
             <p className="mt-1 text-muted-foreground">{puppy.breed} · {puppy.gender} · {puppy.age_weeks} weeks {puppy.color ? `· ${puppy.color}` : ""}</p>
@@ -146,5 +140,55 @@ function Field({ label, name, type = "text", required, defaultValue }: { label: 
         className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
       />
     </label>
+  );
+}
+
+function PuppyGallery({ puppy }: { puppy: Puppy }) {
+  const items = puppy.media.length
+    ? puppy.media
+    : puppy.image_url
+      ? [{ type: "image" as const, url: puppy.image_url }]
+      : [];
+  const [active, setActive] = useState(0);
+  const current = items[active];
+
+  if (!current) {
+    return (
+      <div className="flex aspect-square items-center justify-center overflow-hidden rounded-3xl bg-muted text-8xl shadow-card">🐶</div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="aspect-square overflow-hidden rounded-3xl bg-muted shadow-card">
+        {current.type === "image" ? (
+          <img src={current.url} alt={puppy.name} className="h-full w-full object-cover" />
+        ) : (
+          <video src={current.url} controls playsInline className="h-full w-full bg-black object-contain" />
+        )}
+      </div>
+      {items.length > 1 && (
+        <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
+          {items.map((m, i) => (
+            <button
+              type="button"
+              key={m.url}
+              onClick={() => setActive(i)}
+              className={`relative h-16 w-16 flex-none overflow-hidden rounded-lg border-2 transition ${i === active ? "border-primary" : "border-transparent opacity-80 hover:opacity-100"}`}
+              aria-label={`View ${m.type} ${i + 1}`}
+            >
+              {m.type === "image" ? (
+                <img src={m.url} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <>
+                  <video src={m.url} muted className="h-full w-full object-cover" />
+                  <span className="absolute inset-0 flex items-center justify-center bg-black/30 text-white text-lg">▶</span>
+                </>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
