@@ -17,19 +17,23 @@ export type Puppy = {
   created_at: string;
 };
 
+function normalize(row: Record<string, unknown>): Puppy {
+  return { ...row, media: Array.isArray(row.media) ? (row.media as MediaItem[]) : [] } as Puppy;
+}
+
 export async function fetchPuppies(): Promise<Puppy[]> {
   const { data, error } = await supabase
     .from("puppies")
     .select("*")
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return (data ?? []) as Puppy[];
+  return (data ?? []).map(normalize);
 }
 
 export async function fetchPuppy(id: string): Promise<Puppy | null> {
   const { data, error } = await supabase.from("puppies").select("*").eq("id", id).maybeSingle();
   if (error) throw error;
-  return data as Puppy | null;
+  return data ? normalize(data) : null;
 }
 
 export type PaymentSettings = {
