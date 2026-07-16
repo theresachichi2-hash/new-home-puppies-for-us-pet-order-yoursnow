@@ -70,13 +70,7 @@ function PuppyPage() {
       <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">← Back to puppies</Link>
       <div className="mt-6 grid gap-10 md:grid-cols-2">
         <div>
-          <div className="aspect-square overflow-hidden rounded-3xl bg-muted shadow-card">
-            {puppy.image_url ? (
-              <img src={puppy.image_url} alt={puppy.name} className="h-full w-full object-cover" />
-            ) : (
-              <div className="flex h-full items-center justify-center text-8xl">🐶</div>
-            )}
-          </div>
+          <PuppyGallery puppy={puppy} />
           <div className="mt-6">
             <h1 className="font-display text-4xl font-semibold">{puppy.name}</h1>
             <p className="mt-1 text-muted-foreground">{puppy.breed} · {puppy.gender} · {puppy.age_weeks} weeks {puppy.color ? `· ${puppy.color}` : ""}</p>
