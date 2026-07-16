@@ -296,8 +296,8 @@ function OrdersAdmin() {
 
   if (isLoading) return <div className="text-muted-foreground">Loading…</div>;
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card">
-      <table className="w-full text-sm">
+    <div className="overflow-x-auto rounded-2xl border border-border bg-card">
+      <table className="w-full min-w-[960px] text-sm">
         <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
           <tr>
             <th className="p-3">Date</th><th className="p-3">Puppy</th><th className="p-3">Buyer</th>
