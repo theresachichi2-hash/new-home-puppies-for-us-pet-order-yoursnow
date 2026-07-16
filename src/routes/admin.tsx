@@ -124,25 +124,40 @@ function PuppiesAdmin() {
           onCancel={() => { setCreating(false); setEditing(null); }}
         />
       )}
-      <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-card">
-        <table className="w-full text-sm">
+      <div className="mt-6 overflow-x-auto rounded-2xl border border-border bg-card">
+        <table className="w-full min-w-[720px] text-sm">
           <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
-            <tr><th className="p-3">Name</th><th className="p-3">Breed</th><th className="p-3">Price</th><th className="p-3">Available</th><th className="p-3"></th></tr>
+            <tr>
+              <th className="p-3">Image</th><th className="p-3">Name</th><th className="p-3">Breed</th>
+              <th className="p-3">Gender</th><th className="p-3">Age</th><th className="p-3">Price</th>
+              <th className="p-3">Status</th><th className="p-3 text-right">Actions</th>
+            </tr>
           </thead>
           <tbody>
             {puppies?.map((p) => (
               <tr key={p.id} className="border-t border-border">
-                <td className="p-3 font-medium">{p.name}</td>
-                <td className="p-3">{p.breed}</td>
-                <td className="p-3">${p.price.toLocaleString()}</td>
-                <td className="p-3">{p.available ? "Yes" : "No"}</td>
-                <td className="p-3 text-right">
-                  <button onClick={() => { setEditing(p); setCreating(false); }} className="mr-2 text-primary hover:underline">Edit</button>
-                  <button onClick={() => del(p.id)} className="text-destructive hover:underline">Delete</button>
+                <td className="p-3">
+                  {p.image_url
+                    ? <img src={p.image_url} alt={p.name} className="h-12 w-12 rounded-lg object-cover" />
+                    : <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted text-xl">🐶</div>}
+                </td>
+                <td className="p-3 font-medium whitespace-nowrap">{p.name}</td>
+                <td className="p-3 whitespace-nowrap">{p.breed}</td>
+                <td className="p-3">{p.gender}</td>
+                <td className="p-3 whitespace-nowrap">{p.age_weeks}w</td>
+                <td className="p-3 whitespace-nowrap">${p.price.toLocaleString()}</td>
+                <td className="p-3">
+                  <span className={`inline-block rounded-full px-2 py-0.5 text-xs ${p.available ? "bg-green-100 text-green-800" : "bg-muted text-muted-foreground"}`}>
+                    {p.available ? "Available" : "Sold"}
+                  </span>
+                </td>
+                <td className="p-3 text-right whitespace-nowrap">
+                  <button onClick={() => { setEditing(p); setCreating(false); }} className="mr-2 rounded-full bg-secondary px-3 py-1.5 text-xs font-medium">Edit</button>
+                  <button onClick={() => del(p.id)} className="rounded-full bg-destructive px-3 py-1.5 text-xs font-medium text-destructive-foreground">Delete</button>
                 </td>
               </tr>
             ))}
-            {puppies?.length === 0 && <tr><td colSpan={5} className="p-6 text-center text-muted-foreground">No puppies yet.</td></tr>}
+            {puppies?.length === 0 && <tr><td colSpan={8} className="p-6 text-center text-muted-foreground">No puppies yet.</td></tr>}
           </tbody>
         </table>
       </div>
@@ -281,8 +296,8 @@ function OrdersAdmin() {
 
   if (isLoading) return <div className="text-muted-foreground">Loading…</div>;
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card">
-      <table className="w-full text-sm">
+    <div className="overflow-x-auto rounded-2xl border border-border bg-card">
+      <table className="w-full min-w-[960px] text-sm">
         <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
           <tr>
             <th className="p-3">Date</th><th className="p-3">Puppy</th><th className="p-3">Buyer</th>
