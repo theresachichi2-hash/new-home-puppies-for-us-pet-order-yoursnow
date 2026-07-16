@@ -1,5 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
+export type MediaItem = { type: "image" | "video"; url: string };
+
 export type Puppy = {
   id: string;
   name: string;
@@ -10,6 +12,7 @@ export type Puppy = {
   price: number;
   description: string | null;
   image_url: string | null;
+  media: MediaItem[];
   available: boolean;
   created_at: string;
 };
