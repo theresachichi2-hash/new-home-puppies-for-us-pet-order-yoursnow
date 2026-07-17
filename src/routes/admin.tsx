@@ -231,6 +231,10 @@ function PuppyForm({ puppy, onDone, onCancel }: { puppy: Puppy | null; onDone: (
       image_url: cover,
       media,
       available: fd.get("available") === "on",
+      seller_name: String(fd.get("seller_name") || "") || null,
+      seller_phone: String(fd.get("seller_phone") || "") || null,
+      seller_email: String(fd.get("seller_email") || "") || null,
+      seller_notes: String(fd.get("seller_notes") || "") || null,
     };
     setBusy(true);
     const { error } = puppy
