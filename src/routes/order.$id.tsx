@@ -46,9 +46,44 @@ function OrderPage() {
           <PayCard title="Bitcoin" empty={!settings?.bitcoin_address}>
             {settings?.bitcoin_address && <CopyRow label="BTC address" value={settings.bitcoin_address} />}
           </PayCard>
+
+          {!settings?.paypal_email && !settings?.paypal_me_link && !settings?.bitcoin_address && (
+            <ContactSeller orderId={order?.id ?? ""} />
+          )}
         </div>
 
         <Link to="/" className="mt-8 inline-block text-sm text-primary hover:underline">← Back to puppies</Link>
+      </div>
+    </div>
+  );
+}
+
+function ContactSeller({ orderId }: { orderId: string }) {
+  const phoneDisplay = "+1 (985) 602-3749";
+  const phoneE164 = "+19856023749";
+  const waNumber = "19856023749";
+  const message = `Hi! I just placed order ${orderId} and would like to arrange payment.`;
+  const encoded = encodeURIComponent(message);
+  return (
+    <div className="rounded-2xl border-2 border-primary/40 bg-primary/5 p-5">
+      <div className="mb-2 font-display text-lg font-semibold">Payment not set up yet</div>
+      <p className="text-sm text-muted-foreground">
+        PayPal and Bitcoin aren't configured. Please contact the seller directly at{" "}
+        <span className="font-medium text-foreground">{phoneDisplay}</span> to arrange payment.
+      </p>
+      <div className="mt-4 grid gap-2 sm:grid-cols-3">
+        <a href={`https://wa.me/${waNumber}?text=${encoded}`} target="_blank" rel="noreferrer"
+          className="rounded-lg bg-primary px-4 py-2 text-center text-sm font-medium text-primary-foreground">
+          WhatsApp
+        </a>
+        <a href={`sms:${phoneE164}?body=${encoded}`}
+          className="rounded-lg border border-border bg-background px-4 py-2 text-center text-sm font-medium">
+          Text message
+        </a>
+        <a href={`tel:${phoneE164}`}
+          className="rounded-lg border border-border bg-background px-4 py-2 text-center text-sm font-medium">
+          Call
+        </a>
       </div>
     </div>
   );
