@@ -15,10 +15,21 @@ export type Puppy = {
   media: MediaItem[];
   available: boolean;
   created_at: string;
+  seller_name: string | null;
+  seller_phone: string | null;
+  seller_email: string | null;
+  seller_notes: string | null;
 };
 
 function normalize(row: Record<string, unknown>): Puppy {
-  return { ...row, media: Array.isArray(row.media) ? (row.media as MediaItem[]) : [] } as Puppy;
+  return {
+    ...row,
+    media: Array.isArray(row.media) ? (row.media as MediaItem[]) : [],
+    seller_name: (row.seller_name as string | null) ?? null,
+    seller_phone: (row.seller_phone as string | null) ?? null,
+    seller_email: (row.seller_email as string | null) ?? null,
+    seller_notes: (row.seller_notes as string | null) ?? null,
+  } as Puppy;
 }
 
 export async function fetchPuppies(): Promise<Puppy[]> {
