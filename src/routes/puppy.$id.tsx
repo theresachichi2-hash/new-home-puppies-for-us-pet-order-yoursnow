@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { fetchPuppy, type Puppy } from "@/lib/puppies";
+import { fetchPuppy, fetchPaymentSettings, type Puppy } from "@/lib/puppies";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/puppy/$id")({
@@ -28,8 +28,10 @@ function PuppyPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const { data: puppy, isLoading } = useQuery({ queryKey: ["puppy", id], queryFn: () => fetchPuppy(id) });
+  const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: fetchPaymentSettings });
   const [submitting, setSubmitting] = useState(false);
   const [payment, setPayment] = useState<"paypal" | "bitcoin">("paypal");
+  const noPaymentConfigured = !settings?.paypal_email && !settings?.paypal_me_link && !settings?.bitcoin_address;
 
   if (isLoading) return <div className="mx-auto max-w-6xl px-4 py-16 text-muted-foreground">Loading…</div>;
   if (!puppy) return (
@@ -115,7 +117,24 @@ function PuppyPage() {
                   </button>
                 ))}
               </div>
+              {noPaymentConfigured && (
+                <div className="mt-3 rounded-xl border-2 border-primary/40 bg-primary/5 p-4 text-sm">
+                  <div className="font-medium">Online payment not set up yet</div>
+                  <p className="mt-1 text-muted-foreground">
+                    Message the seller directly at <span className="font-medium text-foreground">+1 (985) 602-3749</span> to arrange payment for {puppy.name}.
+                  </p>
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    <a href={`https://wa.me/19856023749?text=${encodeURIComponent(`Hi! I'd like to reserve ${puppy.name} (${puppy.breed}) for $${puppy.price}.`)}`} target="_blank" rel="noreferrer"
+                      className="rounded-lg bg-primary px-3 py-2 text-center text-xs font-medium text-primary-foreground">WhatsApp</a>
+                    <a href={`sms:+19856023749?body=${encodeURIComponent(`Hi! I'd like to reserve ${puppy.name} (${puppy.breed}) for $${puppy.price}.`)}`}
+                      className="rounded-lg border border-border bg-background px-3 py-2 text-center text-xs font-medium">Text</a>
+                    <a href="tel:+19856023749"
+                      className="rounded-lg border border-border bg-background px-3 py-2 text-center text-xs font-medium">Call</a>
+                  </div>
+                </div>
+              )}
             </div>
+
 
             <button disabled={submitting} className="mt-2 rounded-full bg-primary py-3 text-sm font-medium text-primary-foreground shadow-soft transition hover:opacity-90 disabled:opacity-50">
               {submitting ? "Placing order…" : `Reserve for $${puppy.price.toLocaleString()}`}
