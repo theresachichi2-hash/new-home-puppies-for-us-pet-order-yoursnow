@@ -78,6 +78,25 @@ function PuppyPage() {
             <p className="mt-1 text-muted-foreground">{puppy.breed} · {puppy.gender} · {puppy.age_weeks} weeks {puppy.color ? `· ${puppy.color}` : ""}</p>
             <div className="mt-4 text-3xl font-semibold text-primary">${puppy.price.toLocaleString()}</div>
             {puppy.description && <p className="mt-4 leading-relaxed text-foreground/80">{puppy.description}</p>}
+            {(puppy.seller_name || puppy.seller_phone || puppy.seller_email) && (
+              <div className="mt-6 rounded-2xl border border-border bg-card p-4">
+                <div className="text-sm font-semibold">Seller contact</div>
+                {puppy.seller_name && <div className="mt-1 text-sm">{puppy.seller_name}</div>}
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {puppy.seller_phone && (
+                    <>
+                      <a href={`tel:${puppy.seller_phone}`} className="rounded-full border border-border px-3 py-1.5 text-xs font-medium">📞 {puppy.seller_phone}</a>
+                      <a href={`sms:${puppy.seller_phone}`} className="rounded-full border border-border px-3 py-1.5 text-xs font-medium">💬 Text</a>
+                      <a href={`https://wa.me/${puppy.seller_phone.replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer" className="rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground">WhatsApp</a>
+                    </>
+                  )}
+                  {puppy.seller_email && (
+                    <a href={`mailto:${puppy.seller_email}`} className="rounded-full border border-border px-3 py-1.5 text-xs font-medium">✉️ {puppy.seller_email}</a>
+                  )}
+                </div>
+                {puppy.seller_notes && <p className="mt-3 text-xs text-muted-foreground">{puppy.seller_notes}</p>}
+              </div>
+            )}
           </div>
         </div>
 
