@@ -123,6 +123,10 @@ export type Database = {
           media: Json
           name: string
           price: number
+          seller_email: string | null
+          seller_name: string | null
+          seller_notes: string | null
+          seller_phone: string | null
           updated_at: string
         }
         Insert: {
@@ -138,6 +142,10 @@ export type Database = {
           media?: Json
           name: string
           price: number
+          seller_email?: string | null
+          seller_name?: string | null
+          seller_notes?: string | null
+          seller_phone?: string | null
           updated_at?: string
         }
         Update: {
@@ -153,6 +161,10 @@ export type Database = {
           media?: Json
           name?: string
           price?: number
+          seller_email?: string | null
+          seller_name?: string | null
+          seller_notes?: string | null
+          seller_phone?: string | null
           updated_at?: string
         }
         Relationships: []
