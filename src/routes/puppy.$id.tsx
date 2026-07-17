@@ -28,8 +28,10 @@ function PuppyPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const { data: puppy, isLoading } = useQuery({ queryKey: ["puppy", id], queryFn: () => fetchPuppy(id) });
+  const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: fetchPaymentSettings });
   const [submitting, setSubmitting] = useState(false);
   const [payment, setPayment] = useState<"paypal" | "bitcoin">("paypal");
+  const noPaymentConfigured = !settings?.paypal_email && !settings?.paypal_me_link && !settings?.bitcoin_address;
 
   if (isLoading) return <div className="mx-auto max-w-6xl px-4 py-16 text-muted-foreground">Loading…</div>;
   if (!puppy) return (
