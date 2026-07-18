@@ -220,6 +220,16 @@ function PuppyForm({ puppy, onDone, onCancel }: { puppy: Puppy | null; onDone: (
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const cover = media.find((m) => m.type === "image")?.url ?? null;
+    const numOrNull = (k: string) => {
+      const v = fd.get(k);
+      if (v === null || v === "") return null;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    };
+    const strOrNull = (k: string) => {
+      const v = String(fd.get(k) || "").trim();
+      return v ? v : null;
+    };
     const payload = {
       name: String(fd.get("name")),
       breed: String(fd.get("breed")),
@@ -231,10 +241,18 @@ function PuppyForm({ puppy, onDone, onCancel }: { puppy: Puppy | null; onDone: (
       image_url: cover,
       media,
       available: fd.get("available") === "on",
-      seller_name: String(fd.get("seller_name") || "") || null,
-      seller_phone: String(fd.get("seller_phone") || "") || null,
-      seller_email: String(fd.get("seller_email") || "") || null,
-      seller_notes: String(fd.get("seller_notes") || "") || null,
+      seller_name: strOrNull("seller_name"),
+      seller_phone: strOrNull("seller_phone"),
+      seller_email: strOrNull("seller_email"),
+      seller_notes: strOrNull("seller_notes"),
+      size: strOrNull("size"),
+      generation: strOrNull("generation"),
+      weight_min_lbs: numOrNull("weight_min_lbs"),
+      weight_max_lbs: numOrNull("weight_max_lbs"),
+      date_of_birth: strOrNull("date_of_birth"),
+      vet_checked: fd.get("vet_checked") === "on",
+      vaccines_status: strOrNull("vaccines_status"),
+      free_delivery: fd.get("free_delivery") === "on",
     };
     setBusy(true);
     const { error } = puppy
@@ -288,6 +306,33 @@ function PuppyForm({ puppy, onDone, onCancel }: { puppy: Puppy | null; onDone: (
           {uploading > 0 && <span className="ml-1 font-medium text-foreground">Uploading {uploading}…</span>}
         </p>
       </div>
+      <div className="grid gap-3 sm:col-span-2 sm:grid-cols-2 rounded-2xl border border-dashed border-border p-4">
+        <div className="sm:col-span-2 text-sm font-medium">Puppy details (shown to buyers)</div>
+        <label className="text-sm"><span className="mb-1 block font-medium">Size</span>
+          <select name="size" defaultValue={puppy?.size ?? ""} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
+            <option value="">—</option><option>Teacup</option><option>Micro</option><option>Mini</option><option>Standard</option><option>Medium</option><option>Large</option>
+          </select>
+        </label>
+        <label className="text-sm"><span className="mb-1 block font-medium">Generation</span>
+          <select name="generation" defaultValue={puppy?.generation ?? ""} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
+            <option value="">—</option><option>F1</option><option>F1B</option><option>F2</option><option>F2B</option><option>Multi-gen</option><option>Purebred</option>
+          </select>
+        </label>
+        <FInput label="Weight min (lbs)" name="weight_min_lbs" type="number" step="0.1" defaultValue={puppy?.weight_min_lbs?.toString() ?? ""} />
+        <FInput label="Weight max (lbs)" name="weight_max_lbs" type="number" step="0.1" defaultValue={puppy?.weight_max_lbs?.toString() ?? ""} />
+        <FInput label="Date of birth" name="date_of_birth" type="date" defaultValue={puppy?.date_of_birth ?? ""} />
+        <label className="text-sm"><span className="mb-1 block font-medium">Vaccines status</span>
+          <select name="vaccines_status" defaultValue={puppy?.vaccines_status ?? ""} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
+            <option value="">—</option><option>Up to date</option><option>Partial</option><option>Not started</option>
+          </select>
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" name="vet_checked" defaultChecked={puppy?.vet_checked ?? false} /> Vet checked
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" name="free_delivery" defaultChecked={puppy?.free_delivery ?? false} /> Free delivery to buyer's state
+        </label>
+      </div>
       <label className="text-sm sm:col-span-2"><span className="mb-1 block font-medium">Description</span>
         <textarea name="description" defaultValue={puppy?.description ?? ""} rows={3} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" />
       </label>
@@ -304,6 +349,7 @@ function PuppyForm({ puppy, onDone, onCancel }: { puppy: Puppy | null; onDone: (
       <label className="flex items-center gap-2 text-sm sm:col-span-2">
         <input type="checkbox" name="available" defaultChecked={puppy?.available ?? true} /> Available for sale
       </label>
+
       <div className="flex gap-2 sm:col-span-2">
         <button disabled={busy || uploading > 0} className="rounded-full bg-primary px-5 py-2 text-sm text-primary-foreground disabled:opacity-50">{busy ? "Saving…" : "Save"}</button>
         <button type="button" onClick={onCancel} className="rounded-full bg-secondary px-5 py-2 text-sm">Cancel</button>

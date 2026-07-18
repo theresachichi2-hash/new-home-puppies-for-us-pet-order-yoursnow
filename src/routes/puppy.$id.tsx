@@ -1,10 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { fetchPuppy, fetchPaymentSettings, type Puppy } from "@/lib/puppies";
+import { fetchPuppy, fetchPaymentSettings, reservationAmount, type Puppy } from "@/lib/puppies";
+import { ReviewsSection, Stars } from "@/components/Reviews";
 import { supabase } from "@/integrations/supabase/client";
+
 
 export const Route = createFileRoute("/puppy/$id")({
   component: PuppyPage,
@@ -33,6 +35,12 @@ function PuppyPage() {
   const [payment, setPayment] = useState<"paypal" | "bitcoin">("paypal");
   const noPaymentConfigured = !settings?.paypal_email && !settings?.paypal_me_link && !settings?.bitcoin_address;
 
+  useEffect(() => {
+    if (!puppy) return;
+    supabase.from("puppies").update({ view_count: (puppy.view_count ?? 0) + 1 }).eq("id", puppy.id).then(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [puppy?.id]);
+
   if (isLoading) return <div className="mx-auto max-w-6xl px-4 py-16 text-muted-foreground">Loading…</div>;
   if (!puppy) return (
     <div className="mx-auto max-w-6xl px-4 py-16">
@@ -40,6 +48,8 @@ function PuppyPage() {
       <Link to="/" className="mt-4 inline-block text-primary underline">Back to puppies</Link>
     </div>
   );
+
+  const reserve = reservationAmount(puppy.price);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -57,6 +67,7 @@ function PuppyPage() {
       puppy_name: puppy.name,
       puppy_breed: puppy.breed,
       price: puppy.price,
+      reservation_amount: reserve,
       ...parsed.data,
     }).select("id").single();
     setSubmitting(false);
@@ -75,8 +86,19 @@ function PuppyPage() {
           <PuppyGallery puppy={puppy} />
           <div className="mt-6">
             <h1 className="font-display text-4xl font-semibold">{puppy.name}</h1>
-            <p className="mt-1 text-muted-foreground">{puppy.breed} · {puppy.gender} · {puppy.age_weeks} weeks {puppy.color ? `· ${puppy.color}` : ""}</p>
-            <div className="mt-4 text-3xl font-semibold text-primary">${puppy.price.toLocaleString()}</div>
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <Stars value={5} />
+              <span className="text-sm text-muted-foreground">5.0 rating</span>
+              <span className="text-sm text-muted-foreground">· ❤ Viewed {puppy.view_count.toLocaleString()} times</span>
+            </div>
+            <p className="mt-3 text-muted-foreground">{puppy.breed} · {puppy.gender} · {puppy.age_weeks} weeks {puppy.color ? `· ${puppy.color}` : ""}</p>
+            <div className="mt-4 flex flex-wrap items-baseline gap-3">
+              <div className="text-3xl font-semibold text-primary">${puppy.price.toLocaleString()}</div>
+              <div className="text-sm text-muted-foreground">Reserve today for <span className="font-semibold text-foreground">${reserve.toLocaleString()}</span> (25%)</div>
+            </div>
+
+            <PuppyFacts puppy={puppy} />
+
             {puppy.description && <p className="mt-4 leading-relaxed text-foreground/80">{puppy.description}</p>}
             {(puppy.seller_name || puppy.seller_phone || puppy.seller_email) && (
               <div className="mt-6 rounded-2xl border border-border bg-card p-4">
@@ -99,6 +121,7 @@ function PuppyPage() {
             )}
           </div>
         </div>
+
 
         <form onSubmit={onSubmit} className="rounded-3xl border border-border bg-card p-6 shadow-card">
           <h2 className="font-display text-2xl font-semibold">Checkout</h2>
@@ -155,16 +178,69 @@ function PuppyPage() {
             </div>
 
 
+            <div className="mt-2 rounded-xl bg-secondary/60 p-3 text-sm">
+              <div className="flex justify-between"><span>Puppy price</span><span className="font-medium">${puppy.price.toLocaleString()}</span></div>
+              <div className="mt-1 flex justify-between text-primary"><span className="font-medium">Reservation fee (25%)</span><span className="font-semibold">${reserve.toLocaleString()}</span></div>
+              <div className="mt-1 text-xs text-muted-foreground">Balance of ${(puppy.price - reserve).toLocaleString()} due at delivery.</div>
+            </div>
+
             <button disabled={submitting} className="mt-2 rounded-full bg-primary py-3 text-sm font-medium text-primary-foreground shadow-soft transition hover:opacity-90 disabled:opacity-50">
-              {submitting ? "Placing order…" : `Reserve for $${puppy.price.toLocaleString()}`}
+              {submitting ? "Placing order…" : `Pay reservation fee of $${reserve.toLocaleString()}`}
             </button>
             <p className="text-center text-xs text-muted-foreground">You'll get payment instructions on the next step.</p>
           </div>
         </form>
       </div>
+
+      <ReviewsSection puppyId={puppy.id} />
     </div>
   );
 }
+
+function PuppyFacts({ puppy }: { puppy: Puppy }) {
+  const chips: string[] = [puppy.gender, `${puppy.age_weeks} weeks old`];
+  if (puppy.size) chips.push(puppy.size);
+  if (puppy.generation) chips.push(puppy.generation);
+  chips.push(puppy.breed);
+
+  const facts: { label: string; value: string }[] = [];
+  facts.push({ label: "Breed", value: puppy.breed });
+  if (puppy.color) facts.push({ label: "Color", value: puppy.color });
+  if (puppy.weight_min_lbs && puppy.weight_max_lbs) {
+    facts.push({ label: "Weight (est.)", value: `${puppy.weight_min_lbs}-${puppy.weight_max_lbs} lbs` });
+  }
+  if (puppy.date_of_birth) {
+    facts.push({ label: "Date of birth", value: new Date(puppy.date_of_birth).toLocaleDateString() });
+  }
+  facts.push({ label: "Vet", value: puppy.vet_checked ? "Checked" : "Not checked" });
+  if (puppy.vaccines_status) facts.push({ label: "Vaccines", value: puppy.vaccines_status });
+
+  return (
+    <div className="mt-5">
+      <div className="flex flex-wrap items-center gap-2">
+        {puppy.free_delivery && (
+          <span className="rounded-full border border-green-300 bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
+            Free delivery to your state
+          </span>
+        )}
+        {chips.map((c) => (
+          <span key={c} className="rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold">{c}</span>
+        ))}
+      </div>
+      {facts.length > 0 && (
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          {facts.map((f) => (
+            <div key={f.label} className="rounded-xl border border-border bg-card p-3">
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{f.label}</div>
+              <div className="mt-0.5 text-sm font-medium">{f.value}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 function Field({ label, name, type = "text", required, defaultValue }: { label: string; name: string; type?: string; required?: boolean; defaultValue?: string }) {
   return (

@@ -32,6 +32,7 @@ export type Database = {
           puppy_breed: string
           puppy_id: string | null
           puppy_name: string
+          reservation_amount: number | null
           state: string
           status: string
         }
@@ -52,6 +53,7 @@ export type Database = {
           puppy_breed: string
           puppy_id?: string | null
           puppy_name: string
+          reservation_amount?: number | null
           state: string
           status?: string
         }
@@ -72,6 +74,7 @@ export type Database = {
           puppy_breed?: string
           puppy_id?: string | null
           puppy_name?: string
+          reservation_amount?: number | null
           state?: string
           status?: string
         }
@@ -116,8 +119,11 @@ export type Database = {
           breed: string
           color: string | null
           created_at: string
+          date_of_birth: string | null
           description: string | null
+          free_delivery: boolean
           gender: string
+          generation: string | null
           id: string
           image_url: string | null
           media: Json
@@ -127,7 +133,13 @@ export type Database = {
           seller_name: string | null
           seller_notes: string | null
           seller_phone: string | null
+          size: string | null
           updated_at: string
+          vaccines_status: string | null
+          vet_checked: boolean
+          view_count: number
+          weight_max_lbs: number | null
+          weight_min_lbs: number | null
         }
         Insert: {
           age_weeks?: number
@@ -135,8 +147,11 @@ export type Database = {
           breed: string
           color?: string | null
           created_at?: string
+          date_of_birth?: string | null
           description?: string | null
+          free_delivery?: boolean
           gender: string
+          generation?: string | null
           id?: string
           image_url?: string | null
           media?: Json
@@ -146,7 +161,13 @@ export type Database = {
           seller_name?: string | null
           seller_notes?: string | null
           seller_phone?: string | null
+          size?: string | null
           updated_at?: string
+          vaccines_status?: string | null
+          vet_checked?: boolean
+          view_count?: number
+          weight_max_lbs?: number | null
+          weight_min_lbs?: number | null
         }
         Update: {
           age_weeks?: number
@@ -154,8 +175,11 @@ export type Database = {
           breed?: string
           color?: string | null
           created_at?: string
+          date_of_birth?: string | null
           description?: string | null
+          free_delivery?: boolean
           gender?: string
+          generation?: string | null
           id?: string
           image_url?: string | null
           media?: Json
@@ -165,9 +189,50 @@ export type Database = {
           seller_name?: string | null
           seller_notes?: string | null
           seller_phone?: string | null
+          size?: string | null
           updated_at?: string
+          vaccines_status?: string | null
+          vet_checked?: boolean
+          view_count?: number
+          weight_max_lbs?: number | null
+          weight_min_lbs?: number | null
         }
         Relationships: []
+      }
+      reviews: {
+        Row: {
+          author_name: string
+          content: string
+          created_at: string
+          id: string
+          puppy_id: string | null
+          rating: number
+        }
+        Insert: {
+          author_name: string
+          content: string
+          created_at?: string
+          id?: string
+          puppy_id?: string | null
+          rating?: number
+        }
+        Update: {
+          author_name?: string
+          content?: string
+          created_at?: string
+          id?: string
+          puppy_id?: string | null
+          rating?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_puppy_id_fkey"
+            columns: ["puppy_id"]
+            isOneToOne: false
+            referencedRelation: "puppies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
