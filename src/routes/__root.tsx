@@ -9,7 +9,7 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { Toaster } from "sonner";
-import { Menu, X, ChevronDown, ChevronRight } from "lucide-react";
+import { Menu, ChevronDown, ChevronRight } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 import appCss from "../styles.css?url";
