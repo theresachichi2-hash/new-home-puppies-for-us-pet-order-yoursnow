@@ -220,6 +220,16 @@ function PuppyForm({ puppy, onDone, onCancel }: { puppy: Puppy | null; onDone: (
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const cover = media.find((m) => m.type === "image")?.url ?? null;
+    const numOrNull = (k: string) => {
+      const v = fd.get(k);
+      if (v === null || v === "") return null;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    };
+    const strOrNull = (k: string) => {
+      const v = String(fd.get(k) || "").trim();
+      return v ? v : null;
+    };
     const payload = {
       name: String(fd.get("name")),
       breed: String(fd.get("breed")),
@@ -231,10 +241,18 @@ function PuppyForm({ puppy, onDone, onCancel }: { puppy: Puppy | null; onDone: (
       image_url: cover,
       media,
       available: fd.get("available") === "on",
-      seller_name: String(fd.get("seller_name") || "") || null,
-      seller_phone: String(fd.get("seller_phone") || "") || null,
-      seller_email: String(fd.get("seller_email") || "") || null,
-      seller_notes: String(fd.get("seller_notes") || "") || null,
+      seller_name: strOrNull("seller_name"),
+      seller_phone: strOrNull("seller_phone"),
+      seller_email: strOrNull("seller_email"),
+      seller_notes: strOrNull("seller_notes"),
+      size: strOrNull("size"),
+      generation: strOrNull("generation"),
+      weight_min_lbs: numOrNull("weight_min_lbs"),
+      weight_max_lbs: numOrNull("weight_max_lbs"),
+      date_of_birth: strOrNull("date_of_birth"),
+      vet_checked: fd.get("vet_checked") === "on",
+      vaccines_status: strOrNull("vaccines_status"),
+      free_delivery: fd.get("free_delivery") === "on",
     };
     setBusy(true);
     const { error } = puppy
