@@ -101,7 +101,7 @@ function AuthPanel() {
 
 function PuppiesAdmin() {
   const qc = useQueryClient();
-  const { data: puppies } = useQuery({ queryKey: ["puppies"], queryFn: fetchPuppies });
+  const { data: puppies } = useQuery({ queryKey: ["puppies", "admin"], queryFn: fetchPuppiesAdmin });
   const [editing, setEditing] = useState<Puppy | null>(null);
   const [creating, setCreating] = useState(false);
 
