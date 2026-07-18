@@ -86,8 +86,19 @@ function PuppyPage() {
           <PuppyGallery puppy={puppy} />
           <div className="mt-6">
             <h1 className="font-display text-4xl font-semibold">{puppy.name}</h1>
-            <p className="mt-1 text-muted-foreground">{puppy.breed} · {puppy.gender} · {puppy.age_weeks} weeks {puppy.color ? `· ${puppy.color}` : ""}</p>
-            <div className="mt-4 text-3xl font-semibold text-primary">${puppy.price.toLocaleString()}</div>
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <Stars value={5} />
+              <span className="text-sm text-muted-foreground">5.0 rating</span>
+              <span className="text-sm text-muted-foreground">· ❤ Viewed {puppy.view_count.toLocaleString()} times</span>
+            </div>
+            <p className="mt-3 text-muted-foreground">{puppy.breed} · {puppy.gender} · {puppy.age_weeks} weeks {puppy.color ? `· ${puppy.color}` : ""}</p>
+            <div className="mt-4 flex flex-wrap items-baseline gap-3">
+              <div className="text-3xl font-semibold text-primary">${puppy.price.toLocaleString()}</div>
+              <div className="text-sm text-muted-foreground">Reserve today for <span className="font-semibold text-foreground">${reserve.toLocaleString()}</span> (25%)</div>
+            </div>
+
+            <PuppyFacts puppy={puppy} />
+
             {puppy.description && <p className="mt-4 leading-relaxed text-foreground/80">{puppy.description}</p>}
             {(puppy.seller_name || puppy.seller_phone || puppy.seller_email) && (
               <div className="mt-6 rounded-2xl border border-border bg-card p-4">
@@ -110,6 +121,7 @@ function PuppyPage() {
             )}
           </div>
         </div>
+
 
         <form onSubmit={onSubmit} className="rounded-3xl border border-border bg-card p-6 shadow-card">
           <h2 className="font-display text-2xl font-semibold">Checkout</h2>
