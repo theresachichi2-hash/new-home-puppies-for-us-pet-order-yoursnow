@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchPuppies, fetchPaymentSettings, type Puppy, type MediaItem } from "@/lib/puppies";
+import { fetchPuppiesAdmin, fetchPaymentSettings, type Puppy, type MediaItem } from "@/lib/puppies";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
