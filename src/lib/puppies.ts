@@ -21,6 +21,10 @@ export type Puppy = {
   seller_notes: string | null;
 };
 
+// Public-safe columns (no seller PII). Anon role only has SELECT on these.
+const PUBLIC_COLS =
+  "id,name,breed,gender,age_weeks,color,price,description,image_url,media,available,created_at";
+
 function normalize(row: Record<string, unknown>): Puppy {
   return {
     ...row,
@@ -35,16 +39,31 @@ function normalize(row: Record<string, unknown>): Puppy {
 export async function fetchPuppies(): Promise<Puppy[]> {
   const { data, error } = await supabase
     .from("puppies")
-    .select("*")
+    .select(PUBLIC_COLS)
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return (data ?? []).map(normalize);
+  return (data ?? []).map((r) => normalize(r as Record<string, unknown>));
 }
 
 export async function fetchPuppy(id: string): Promise<Puppy | null> {
-  const { data, error } = await supabase.from("puppies").select("*").eq("id", id).maybeSingle();
+  const { data, error } = await supabase
+    .from("puppies")
+    .select(PUBLIC_COLS)
+    .eq("id", id)
+    .maybeSingle();
   if (error) throw error;
-  return data ? normalize(data) : null;
+  return data ? normalize(data as Record<string, unknown>) : null;
+}
+
+// Admin-only: includes seller PII. Requires an authenticated admin session
+// (RLS/grants ensure anon cannot read seller columns).
+export async function fetchPuppiesAdmin(): Promise<Puppy[]> {
+  const { data, error } = await supabase
+    .from("puppies")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map((r) => normalize(r as Record<string, unknown>));
 }
 
 export type PaymentSettings = {
@@ -53,12 +72,16 @@ export type PaymentSettings = {
   bitcoin_address: string | null;
 };
 
+// Admin-only fetch (payment settings are no longer publicly readable).
+// Non-admin callers will get an empty result; buyers see the contact fallback instead.
 export async function fetchPaymentSettings(): Promise<PaymentSettings> {
   const { data, error } = await supabase
     .from("payment_settings")
     .select("paypal_email, paypal_me_link, bitcoin_address")
     .eq("id", 1)
     .maybeSingle();
-  if (error) throw error;
+  if (error) {
+    return { paypal_email: "", paypal_me_link: "", bitcoin_address: "" };
+  }
   return (data ?? { paypal_email: "", paypal_me_link: "", bitcoin_address: "" }) as PaymentSettings;
 }
