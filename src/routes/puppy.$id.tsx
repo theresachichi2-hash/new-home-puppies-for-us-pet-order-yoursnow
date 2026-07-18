@@ -178,16 +178,69 @@ function PuppyPage() {
             </div>
 
 
+            <div className="mt-2 rounded-xl bg-secondary/60 p-3 text-sm">
+              <div className="flex justify-between"><span>Puppy price</span><span className="font-medium">${puppy.price.toLocaleString()}</span></div>
+              <div className="mt-1 flex justify-between text-primary"><span className="font-medium">Reservation fee (25%)</span><span className="font-semibold">${reserve.toLocaleString()}</span></div>
+              <div className="mt-1 text-xs text-muted-foreground">Balance of ${(puppy.price - reserve).toLocaleString()} due at delivery.</div>
+            </div>
+
             <button disabled={submitting} className="mt-2 rounded-full bg-primary py-3 text-sm font-medium text-primary-foreground shadow-soft transition hover:opacity-90 disabled:opacity-50">
-              {submitting ? "Placing order…" : `Reserve for $${puppy.price.toLocaleString()}`}
+              {submitting ? "Placing order…" : `Pay reservation fee of $${reserve.toLocaleString()}`}
             </button>
             <p className="text-center text-xs text-muted-foreground">You'll get payment instructions on the next step.</p>
           </div>
         </form>
       </div>
+
+      <ReviewsSection puppyId={puppy.id} />
     </div>
   );
 }
+
+function PuppyFacts({ puppy }: { puppy: Puppy }) {
+  const chips: string[] = [puppy.gender, `${puppy.age_weeks} weeks old`];
+  if (puppy.size) chips.push(puppy.size);
+  if (puppy.generation) chips.push(puppy.generation);
+  chips.push(puppy.breed);
+
+  const facts: { label: string; value: string }[] = [];
+  facts.push({ label: "Breed", value: puppy.breed });
+  if (puppy.color) facts.push({ label: "Color", value: puppy.color });
+  if (puppy.weight_min_lbs && puppy.weight_max_lbs) {
+    facts.push({ label: "Weight (est.)", value: `${puppy.weight_min_lbs}-${puppy.weight_max_lbs} lbs` });
+  }
+  if (puppy.date_of_birth) {
+    facts.push({ label: "Date of birth", value: new Date(puppy.date_of_birth).toLocaleDateString() });
+  }
+  facts.push({ label: "Vet", value: puppy.vet_checked ? "Checked" : "Not checked" });
+  if (puppy.vaccines_status) facts.push({ label: "Vaccines", value: puppy.vaccines_status });
+
+  return (
+    <div className="mt-5">
+      <div className="flex flex-wrap items-center gap-2">
+        {puppy.free_delivery && (
+          <span className="rounded-full border border-green-300 bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
+            Free delivery to your state
+          </span>
+        )}
+        {chips.map((c) => (
+          <span key={c} className="rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold">{c}</span>
+        ))}
+      </div>
+      {facts.length > 0 && (
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          {facts.map((f) => (
+            <div key={f.label} className="rounded-xl border border-border bg-card p-3">
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{f.label}</div>
+              <div className="mt-0.5 text-sm font-medium">{f.value}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 function Field({ label, name, type = "text", required, defaultValue }: { label: string; name: string; type?: string; required?: boolean; defaultValue?: string }) {
   return (
