@@ -7,8 +7,10 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Toaster } from "sonner";
+import { Menu, ChevronDown, ChevronRight } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -82,20 +84,107 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 function SiteHeader() {
+  const [open, setOpen] = useState(false);
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
         <Link to="/" className="flex items-center gap-2">
           <span className="text-2xl">🐾</span>
-          <span className="font-display text-xl font-semibold">NewHome Puppies</span>
+          <span className="font-display text-xl font-semibold">NewHomePet</span>
         </Link>
-        <nav className="flex items-center gap-6 text-sm">
-          <Link to="/" className="hover:text-primary">Puppies</Link>
-          <Link to="/about" className="hidden hover:text-primary sm:inline">About</Link>
-          <Link to="/admin" className="rounded-full bg-secondary px-3 py-1.5 text-secondary-foreground hover:bg-secondary/80">Admin</Link>
-        </nav>
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetTrigger
+            aria-label="Open menu"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-secondary-foreground hover:bg-secondary/80"
+          >
+            <Menu className="h-5 w-5" />
+          </SheetTrigger>
+          <SheetContent side="right" className="w-[88%] sm:w-96 overflow-y-auto p-0">
+            <MenuPanel onNavigate={() => setOpen(false)} />
+          </SheetContent>
+        </Sheet>
       </div>
     </header>
+  );
+}
+
+type MenuGroup = { label: string; children: { label: string; to?: string; href?: string }[] };
+
+const MENU_GROUPS: MenuGroup[] = [
+  { label: "Breeds", children: [
+    { label: "Cavapoos", href: "/#puppies" },
+    { label: "French Bulldogs", href: "/#puppies" },
+    { label: "Poodles", href: "/#puppies" },
+    { label: "Dachshunds", href: "/#puppies" },
+    { label: "See All", href: "/#puppies" },
+  ]},
+  { label: "Health", children: [
+    { label: "Health Guarantee", href: "/about" },
+    { label: "AKC Benefits", href: "/about" },
+  ]},
+  { label: "Resources", children: [
+    { label: "About", to: "/about" },
+  ]},
+  { label: "Breeder Standards", children: [
+    { label: "About", to: "/about" },
+  ]},
+];
+
+function MenuPanel({ onNavigate }: { onNavigate: () => void }) {
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex items-center gap-2 px-6 py-5 border-b border-border/60">
+        <span className="text-2xl">🐾</span>
+        <span className="font-display text-xl font-semibold text-primary">NewHomePet</span>
+      </div>
+      <nav className="flex-1 px-2 py-4 text-lg">
+        <Link to="/about" onClick={onNavigate} className="flex items-center justify-between rounded-lg px-4 py-3 hover:bg-secondary">
+          Our Story <ChevronRight className="h-5 w-5 opacity-60" />
+        </Link>
+        <a href="/#puppies" onClick={onNavigate} className="flex items-center justify-between rounded-lg px-4 py-3 hover:bg-secondary">
+          Testimonials
+        </a>
+        {MENU_GROUPS.map((g) => {
+          const isOpen = openGroup === g.label;
+          return (
+            <div key={g.label}>
+              <button
+                type="button"
+                onClick={() => setOpenGroup(isOpen ? null : g.label)}
+                className="flex w-full items-center justify-between rounded-lg px-4 py-3 text-left hover:bg-secondary"
+              >
+                <span className={isOpen ? "font-semibold" : ""}>{g.label}</span>
+                {isOpen ? <ChevronDown className="h-5 w-5 opacity-60" /> : <ChevronRight className="h-5 w-5 opacity-60" />}
+              </button>
+              {isOpen && (
+                <div className="ml-4 flex flex-col border-l border-border/60">
+                  {g.children.map((c) => (
+                    c.to ? (
+                      <Link key={c.label} to={c.to} onClick={onNavigate} className="px-5 py-2 text-base text-muted-foreground hover:text-foreground">
+                        {c.label}
+                      </Link>
+                    ) : (
+                      <a key={c.label} href={c.href} onClick={onNavigate} className="px-5 py-2 text-base text-muted-foreground hover:text-foreground">
+                        {c.label}
+                      </a>
+                    )
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+        <Link to="/admin" onClick={onNavigate} className="mt-2 flex items-center justify-between rounded-lg px-4 py-3 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground">
+          Admin
+        </Link>
+      </nav>
+      <div className="border-t border-border/60 px-6 py-6">
+        <p className="text-base leading-relaxed">
+          <span className="font-semibold">Welcome to NewHomePet.</span> Explore our beautiful, healthy puppies and find a loving companion ready for a new home.
+        </p>
+      </div>
+    </div>
   );
 }
 
