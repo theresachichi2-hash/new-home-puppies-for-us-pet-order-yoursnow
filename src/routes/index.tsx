@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { fetchPuppies, type Puppy } from "@/lib/puppies";
+import { fetchPuppies, reservationAmount, type Puppy } from "@/lib/puppies";
+import { ReviewsSection, Stars } from "@/components/Reviews";
 import heroImg from "@/assets/hero-puppies.jpg";
+
 
 export const Route = createFileRoute("/")({
   component: Home,
