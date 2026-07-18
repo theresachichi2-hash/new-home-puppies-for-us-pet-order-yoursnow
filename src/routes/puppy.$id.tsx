@@ -35,6 +35,12 @@ function PuppyPage() {
   const [payment, setPayment] = useState<"paypal" | "bitcoin">("paypal");
   const noPaymentConfigured = !settings?.paypal_email && !settings?.paypal_me_link && !settings?.bitcoin_address;
 
+  useEffect(() => {
+    if (!puppy) return;
+    supabase.from("puppies").update({ view_count: (puppy.view_count ?? 0) + 1 }).eq("id", puppy.id).then(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [puppy?.id]);
+
   if (isLoading) return <div className="mx-auto max-w-6xl px-4 py-16 text-muted-foreground">Loading…</div>;
   if (!puppy) return (
     <div className="mx-auto max-w-6xl px-4 py-16">
@@ -42,6 +48,8 @@ function PuppyPage() {
       <Link to="/" className="mt-4 inline-block text-primary underline">Back to puppies</Link>
     </div>
   );
+
+  const reserve = reservationAmount(puppy.price);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -59,6 +67,7 @@ function PuppyPage() {
       puppy_name: puppy.name,
       puppy_breed: puppy.breed,
       price: puppy.price,
+      reservation_amount: reserve,
       ...parsed.data,
     }).select("id").single();
     setSubmitting(false);
