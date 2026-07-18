@@ -1,10 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { fetchPuppy, fetchPaymentSettings, type Puppy } from "@/lib/puppies";
+import { fetchPuppy, fetchPaymentSettings, reservationAmount, type Puppy } from "@/lib/puppies";
+import { ReviewsSection, Stars } from "@/components/Reviews";
 import { supabase } from "@/integrations/supabase/client";
+
 
 export const Route = createFileRoute("/puppy/$id")({
   component: PuppyPage,
