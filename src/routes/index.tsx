@@ -60,9 +60,12 @@ function Home() {
           {available.map((p) => <PuppyCard key={p.id} puppy={p} />)}
         </div>
       </section>
+
+      <ReviewsSection />
     </div>
   );
 }
+
 
 function PuppyCard({ puppy }: { puppy: Puppy }) {
   return (
@@ -87,12 +90,20 @@ function PuppyCard({ puppy }: { puppy: Puppy }) {
             <h3 className="font-display text-xl font-semibold">{puppy.name}</h3>
             <p className="text-sm text-muted-foreground">{puppy.breed} · {puppy.gender}</p>
           </div>
-          <div className="text-lg font-semibold text-primary">${puppy.price.toLocaleString()}</div>
+          <div className="text-right">
+            <div className="text-lg font-semibold text-primary">${puppy.price.toLocaleString()}</div>
+            <div className="text-[11px] text-muted-foreground">Reserve ${reservationAmount(puppy.price).toLocaleString()}</div>
+          </div>
         </div>
-        <div className="mt-4 inline-flex rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
+        <div className="mt-3 flex items-center gap-2">
+          <Stars value={5} className="text-xs" />
+          <span className="text-[11px] text-muted-foreground">5.0</span>
+        </div>
+        <div className="mt-3 inline-flex rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
           {puppy.age_weeks} weeks old
         </div>
       </div>
+
     </Link>
   );
 }
